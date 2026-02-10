@@ -26,10 +26,11 @@ jobs:
         with:
           # Keep Gradle aligned with the Android Gradle Plugin used by the project.
           # AGP 8.2.x is compatible with Gradle 8.2.x.
-          gradle-version: 8.2.2
+          # Note: Gradle releases are 8.2 and 8.2.1 (there is no 8.2.2).
+          gradle-version: 8.2.1
 
       - name: Generate Gradle Wrapper
-        run: gradle wrapper --gradle-version 8.2.2
+        run: gradle wrapper --gradle-version 8.2.1
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
