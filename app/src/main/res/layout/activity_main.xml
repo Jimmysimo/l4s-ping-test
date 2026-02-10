@@ -76,12 +76,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+            
             <RadioButton
+                android:id="@+id/radioDefault"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Default (do not set Traffic Class)"
+                android:checked="true"/>
+
+<RadioButton
                 android:id="@+id/radioNotEct"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Not-ECT (0x00)"
-                android:checked="true"/>
+                android:text="Force Not-ECT (0x00)"/>
 
             <RadioButton
                 android:id="@+id/radioEct0"
@@ -95,6 +102,15 @@
                 android:layout_height="wrap_content"
                 android:text="ECT(1) / L4S (0x01)"/>
         </RadioGroup>
+
+
+        <CheckBox
+            android:id="@+id/checkApplyBeforeConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Apply Traffic Class before connect (affects TCP handshake/SYN)"
+            android:checked="true"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -119,7 +135,16 @@
                 android:enabled="false"/>
         </LinearLayout>
 
-        <TextView
+        
+        <Button
+            android:id="@+id/runMatrixButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Run ECN Test Matrix (quick)"
+            android:enabled="true"/>
+
+<TextView
             android:id="@+id/output"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
