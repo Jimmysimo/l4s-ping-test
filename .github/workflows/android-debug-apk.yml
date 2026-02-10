@@ -20,6 +20,7 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      # We don't commit a Gradle wrapper; we generate it in CI.
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v3
         with:
