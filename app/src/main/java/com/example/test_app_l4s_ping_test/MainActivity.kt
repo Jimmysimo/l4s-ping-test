@@ -98,7 +98,9 @@ class MainActivity : AppCompatActivity() {
             var fails = 0
 
             for (i in 1..count) {
-                if (!isActive) break
+                // `isActive` is an extension on CoroutineScope/CoroutineContext.
+                // We're inside a suspend function, so use the current coroutine context.
+                if (!currentCoroutineContext().isActive) break
 
                 val res = withContext(Dispatchers.IO) {
                     tcpConnectTimings(host, port, mode.trafficClass, applyBefore)
@@ -184,7 +186,7 @@ class MainActivity : AppCompatActivity() {
 
                 for (mode in modes) {
                     for (applyBefore in listOf(true, false)) {
-                        if (!isActive) break
+                        if (!currentCoroutineContext().isActive) break
                         appendLine("")
                         appendLine("Case: ${mode.label} | applyBefore=$applyBefore")
 
@@ -193,7 +195,7 @@ class MainActivity : AppCompatActivity() {
                         var fails = 0
 
                         for (i in 1..perCaseCount) {
-                            if (!isActive) break
+                            if (!currentCoroutineContext().isActive) break
                             val res = withContext(Dispatchers.IO) {
                                 tcpConnectTimings(host, port, mode.trafficClass, applyBefore)
                             }
