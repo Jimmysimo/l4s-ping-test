@@ -2,6 +2,7 @@ package com.example.test_app_l4s_ping_test
 
 import android.os.Bundle
 import android.os.SystemClock
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
@@ -278,17 +279,33 @@ class MainActivity : AppCompatActivity() {
                 var tcSetMs = 0L
                 var applied = false
 
-                fun maybeSetTc() {
+                fun maybeSetTc(phase: String) {
                     if (trafficClass != null) {
                         val tcStartNs = SystemClock.elapsedRealtimeNanos()
                         sock.trafficClass = trafficClass
-                        tcSetMs += (SystemClock.elapsedRealtimeNanos() - tcStartNs) / 1_000_000L
+                        val tcEndNs = SystemClock.elapsedRealtimeNanos()
+
+                        // Read back what the OS thinks the TrafficClass is.
+                        // Note: readback matching does NOT guarantee the value appears on the wire,
+                        // but readback mismatching is a strong signal something is off.
+                        val readBack = try { sock.trafficClass } catch (_: Throwable) { -1 }
+                        val ecn = if (readBack >= 0) (readBack and 0b11) else -1
+                        val dscp = if (readBack >= 0) ((readBack ushr 2) and 0b111111) else -1
+
+                        tcSetMs += (tcEndNs - tcStartNs) / 1_000_000L
                         applied = true
+
+                        Log.d(
+                            "ECN_TEST",
+                            "$phase setTrafficClass=0x${trafficClass.toString(16)} readBack=0x${readBack.toString(16)} DSCP=$dscp ECN=$ecn tcSetMs=${(tcEndNs - tcStartNs) / 1_000_000.0}ms"
+                        )
+                    } else {
+                        Log.d("ECN_TEST", "$phase TrafficClass not set (DEFAULT mode)")
                     }
                 }
 
                 if (applyBeforeConnect) {
-                    maybeSetTc()
+                    maybeSetTc("PRE")
                 }
 
                 val addr = InetSocketAddress(inet, port)
@@ -297,7 +314,7 @@ class MainActivity : AppCompatActivity() {
                 val connectMs = (SystemClock.elapsedRealtimeNanos() - connStartNs) / 1_000_000L
 
                 if (!applyBeforeConnect) {
-                    maybeSetTc()
+                    maybeSetTc("POST")
                 }
 
                 val totalMs = (SystemClock.elapsedRealtimeNanos() - totalStartNs) / 1_000_000L
