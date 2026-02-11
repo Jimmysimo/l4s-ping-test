@@ -15,7 +15,8 @@ object PingParser {
     // Supports typical 'ping' summary lines.
     // Example:
     // 5 packets transmitted, 5 received, 0% packet loss, time 4006ms
-    private val TXRX = Regex("(\d+) packets transmitted, (\d+) (?:packets )?received, (\d+)% packet loss")
+    // Use a raw string (triple quotes) so regex escapes like \\d are interpreted correctly.
+    private val TXRX = Regex("""(\d+) packets transmitted, (\d+) (?:packets )?received, (\d+)% packet loss""")
     // Example (iputils): rtt min/avg/max/mdev = 9.123/10.456/11.789/0.123 ms
     // Example (toybox): round-trip min/avg/max = 9.123/10.456/11.789 ms
     private val RTT = Regex("(?:rtt|round-trip) (?:min/avg/max(?:/mdev)?|min/avg/max) = ([0-9.]+)/([0-9.]+)/([0-9.]+)")
