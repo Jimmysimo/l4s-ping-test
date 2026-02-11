@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ecn_ping"
+    namespace = "com.example.test_app_l4s_ping_test"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.ecn_ping"
+        applicationId = "com.example.test_app_l4s_ping_test"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
