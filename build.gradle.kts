@@ -1,3 +1,6 @@
 plugins {
-    // Keep root clean; module build files apply their own plugins
+    id("com.android.application") version "8.2.2" apply false
+    id("com.android.library") version "8.2.2" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+    kotlin("jvm") version "1.9.22" apply false
 }

@@ -1,14 +1,14 @@
 plugins {
-    id("com.android.application") version "8.2.2"
-    id("org.jetbrains.kotlin.android") version "1.9.22"
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.example.test_app_l4s_ping_test"
+    namespace = "com.example.ecn_ping"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.test_app_l4s_ping_test"
+        applicationId = "com.example.ecn_ping"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

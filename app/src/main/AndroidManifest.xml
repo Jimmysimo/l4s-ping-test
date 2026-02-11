@@ -1,4 +1,4 @@
-<manifest package="com.example.test_app_l4s_ping_test" xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -6,13 +6,15 @@
         android:label="ECN Ping"
         android:supportsRtl="true"
         android:theme="@style/Theme.EcnPing">
+
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.ecn_ping.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 </manifest>
