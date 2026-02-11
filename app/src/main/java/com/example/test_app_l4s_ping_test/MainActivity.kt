@@ -13,6 +13,11 @@ import kotlin.math.roundToLong
 
 class MainActivity : AppCompatActivity() {
 
+    private companion object {
+        private const val TAG = "ECN_TEST"
+        private const val LOG_FILE_NAME = "ecn_test_log.txt"
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var runningJob: Job? = null
 
@@ -37,6 +42,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Startup breadcrumb so you can prove you're running the APK that contains the ECN logging.
+        // This should appear in logcat immediately after launching the app.
+        Log.i(TAG, "MainActivity started (pid=${android.os.Process.myPid()})")
+
         val domainInput = findViewById<EditText>(R.id.domainInput)
         val portInput = findViewById<EditText>(R.id.portInput)
         val countInput = findViewById<EditText>(R.id.countInput)
@@ -60,6 +69,25 @@ class MainActivity : AppCompatActivity() {
             output.append(s + "\n")
         }
 
+        /**
+         * Writes a line to:
+         * 1) the on-screen output
+         * 2) logcat (INFO level)
+         * 3) a small persistent file (internal storage) so logs survive scrolling / filtering
+         */
+        fun logPersist(line: String) {
+            appendLine(line)
+            Log.i(TAG, line)
+            try {
+                openFileOutput(LOG_FILE_NAME, MODE_APPEND).use { fos ->
+                    fos.write((line + "\n").toByteArray(Charsets.UTF_8))
+                }
+            } catch (t: Throwable) {
+                // If file I/O fails, still keep UI/logcat output.
+                Log.w(TAG, "Failed writing to $LOG_FILE_NAME: ${t.javaClass.simpleName}: ${t.message}")
+            }
+        }
+
         fun selectedMode(): TrafficClassMode {
             return when (ecnGroup.checkedRadioButtonId) {
                 radioEct1.id -> TrafficClassMode.ECT1
@@ -72,14 +100,23 @@ class MainActivity : AppCompatActivity() {
 
         fun printHeader(host: String, port: Int, mode: TrafficClassMode, applyBefore: Boolean, count: Int, intervalMs: Long) {
             output.text = ""
-            appendLine("Target: $host:$port")
-            appendLine("Mode: ${mode.label}")
-            appendLine("Apply TC before connect: $applyBefore")
-            appendLine("Samples: $count   Interval: ${intervalMs}ms")
-            appendLine("-----")
-            appendLine("Per-sample timings (ms): dns, tcSet, connect, total")
-            appendLine("Note: total includes dns + optional tcSet + connect")
-            appendLine("-----")
+
+            // Reset persistent file for this run.
+            try {
+                openFileOutput(LOG_FILE_NAME, MODE_PRIVATE).use { /* truncate */ }
+            } catch (_: Throwable) {
+                // ignore
+            }
+
+            logPersist("Target: $host:$port")
+            logPersist("Mode: ${mode.label}")
+            logPersist("Apply TC before connect: $applyBefore")
+            logPersist("Samples: $count   Interval: ${intervalMs}ms")
+            logPersist("Log file: ${filesDir.absolutePath}/$LOG_FILE_NAME")
+            logPersist("-----")
+            logPersist("Per-sample timings (ms): dns, tcSet, connect, total")
+            logPersist("Note: total includes dns + optional tcSet + connect")
+            logPersist("-----")
         }
 
         fun setButtonsRunning(running: Boolean) {
@@ -109,19 +146,19 @@ class MainActivity : AppCompatActivity() {
 
                 if (res.error != null) {
                     fails += 1
-                    appendLine("[$i] FAIL: ${res.error}")
+                        logPersist("[$i] FAIL: ${res.error}")
                 } else {
                     totals.add(res.totalMs)
                     connects.add(res.connectMs)
                     dnss.add(res.dnsMs)
                     tcSets.add(res.tcSetMs)
-                    appendLine("[$i] dns=${res.dnsMs}  tc=${res.tcSetMs}  conn=${res.connectMs}  total=${res.totalMs}")
+                        logPersist("[$i] dns=${res.dnsMs}  tc=${res.tcSetMs}  conn=${res.connectMs}  total=${res.totalMs}")
                 }
 
                 delay(intervalMs)
             }
 
-            appendLine("-----")
+            logPersist("-----")
             if (totals.isNotEmpty()) {
                 fun stats(label: String, xs: List<Long>) {
                     val sorted = xs.sorted()
@@ -129,15 +166,15 @@ class MainActivity : AppCompatActivity() {
                     val p50 = percentile(sorted, 50.0)
                     val p90 = percentile(sorted, 90.0)
                     val p99 = percentile(sorted, 99.0)
-                    appendLine("$label: avg=${avg}  p50=${p50}  p90=${p90}  p99=${p99}")
+                    logPersist("$label: avg=${avg}  p50=${p50}  p90=${p90}  p99=${p99}")
                 }
-                appendLine("OK=${totals.size}  FAIL=$fails")
+                logPersist("OK=${totals.size}  FAIL=$fails")
                 stats("dns   ", dnss)
                 stats("tcSet ", tcSets)
                 stats("conn  ", connects)
                 stats("total ", totals)
             } else {
-                appendLine("No successful samples. FAIL=$fails")
+                logPersist("No successful samples. FAIL=$fails")
             }
 
             setButtonsRunning(false)
@@ -179,17 +216,25 @@ class MainActivity : AppCompatActivity() {
             runningJob?.cancel()
             runningJob = scope.launch {
                 output.text = ""
-                appendLine("Target: $host:$port")
-                appendLine("Running ECN test matrix (each case: n=$perCaseCount, interval=${intervalMs}ms)")
-                appendLine("-----")
+                // Reset persistent file for this run.
+                try {
+                    openFileOutput(LOG_FILE_NAME, MODE_PRIVATE).use { /* truncate */ }
+                } catch (_: Throwable) {
+                    // ignore
+                }
+
+                logPersist("Target: $host:$port")
+                logPersist("Running ECN test matrix (each case: n=$perCaseCount, interval=${intervalMs}ms)")
+                logPersist("Log file: ${filesDir.absolutePath}/$LOG_FILE_NAME")
+                logPersist("-----")
 
                 setButtonsRunning(true)
 
                 for (mode in modes) {
                     for (applyBefore in listOf(true, false)) {
                         if (!currentCoroutineContext().isActive) break
-                        appendLine("")
-                        appendLine("Case: ${mode.label} | applyBefore=$applyBefore")
+                        logPersist("")
+                        logPersist("Case: ${mode.label} | applyBefore=$applyBefore")
 
                         val totals = mutableListOf<Long>()
                         val connects = mutableListOf<Long>()
@@ -212,19 +257,19 @@ class MainActivity : AppCompatActivity() {
                         if (totals.isNotEmpty()) {
                             val avgTotal = (totals.sum().toDouble() / totals.size).roundToLong()
                             val avgConn = (connects.sum().toDouble() / connects.size).roundToLong()
-                            appendLine("Result: OK=${totals.size} FAIL=$fails | avgConn=${avgConn}ms avgTotal=${avgTotal}ms")
+                            logPersist("Result: OK=${totals.size} FAIL=$fails | avgConn=${avgConn}ms avgTotal=${avgTotal}ms")
                         } else {
-                            appendLine("Result: OK=0 FAIL=$fails")
+                            logPersist("Result: OK=0 FAIL=$fails")
                         }
                     }
                 }
 
-                appendLine("")
-                appendLine("-----")
-                appendLine("Interpretation tips:")
-                appendLine("- If FORCE Not-ECT is slower than DEFAULT, the act of calling setTrafficClass (even to 0x00) changes behavior.")
-                appendLine("- If applyBefore=true is worse than applyBefore=false for ECT(0/1), the path may be intolerant to marked SYN/handshake.")
-                appendLine("- If ECT(0/1) are worse than FORCE Not-ECT, you likely have ECN-intolerant middleboxes on that network.")
+                logPersist("")
+                logPersist("-----")
+                logPersist("Interpretation tips:")
+                logPersist("- If FORCE Not-ECT is slower than DEFAULT, the act of calling setTrafficClass (even to 0x00) changes behavior.")
+                logPersist("- If applyBefore=true is worse than applyBefore=false for ECT(0/1), the path may be intolerant to marked SYN/handshake.")
+                logPersist("- If ECT(0/1) are worse than FORCE Not-ECT, you likely have ECN-intolerant middleboxes on that network.")
                 setButtonsRunning(false)
             }
         }
@@ -233,7 +278,7 @@ class MainActivity : AppCompatActivity() {
             runningJob?.cancel()
             runningJob = null
             setButtonsRunning(false)
-            output.append("Stopped.\n")
+            logPersist("Stopped.")
         }
     }
 
@@ -282,7 +327,12 @@ class MainActivity : AppCompatActivity() {
                 fun maybeSetTc(phase: String) {
                     if (trafficClass != null) {
                         val tcStartNs = SystemClock.elapsedRealtimeNanos()
-                        sock.trafficClass = trafficClass
+                        try {
+                            sock.trafficClass = trafficClass
+                        } catch (t: Throwable) {
+                            Log.e(TAG, "$phase setTrafficClass FAILED for 0x${trafficClass.toString(16)}: ${t.javaClass.simpleName}: ${t.message}")
+                            throw t
+                        }
                         val tcEndNs = SystemClock.elapsedRealtimeNanos()
 
                         // Read back what the OS thinks the TrafficClass is.
@@ -295,12 +345,12 @@ class MainActivity : AppCompatActivity() {
                         tcSetMs += (tcEndNs - tcStartNs) / 1_000_000L
                         applied = true
 
-                        Log.d(
-                            "ECN_TEST",
+                        Log.i(
+                            TAG,
                             "$phase setTrafficClass=0x${trafficClass.toString(16)} readBack=0x${readBack.toString(16)} DSCP=$dscp ECN=$ecn tcSetMs=${(tcEndNs - tcStartNs) / 1_000_000.0}ms"
                         )
                     } else {
-                        Log.d("ECN_TEST", "$phase TrafficClass not set (DEFAULT mode)")
+                        Log.i(TAG, "$phase TrafficClass not set (DEFAULT mode)")
                     }
                 }
 
@@ -312,6 +362,10 @@ class MainActivity : AppCompatActivity() {
                 val connStartNs = SystemClock.elapsedRealtimeNanos()
                 sock.connect(addr, 3000) // 3s timeout
                 val connectMs = (SystemClock.elapsedRealtimeNanos() - connStartNs) / 1_000_000L
+
+                // Breadcrumb to correlate what connect() just did with your packet capture.
+                // The SYN for this connect attempt is what you should inspect in Wireshark.
+                Log.i(TAG, "CONNECT host=$host port=$port local=${sock.localAddress?.hostAddress}:${sock.localPort} remote=${sock.inetAddress?.hostAddress}:${sock.port} connectMs=${connectMs}ms")
 
                 if (!applyBeforeConnect) {
                     maybeSetTc("POST")
