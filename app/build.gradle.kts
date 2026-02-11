@@ -37,6 +37,15 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // IMPORTANT: Some repos end up with multiple historical source folders (e.g., older package names).
+    // That can cause Gradle to compile the wrong MainActivity and fail with "Unresolved reference: R".
+    // We intentionally scope the app's Kotlin/Java sources to THIS package folder only.
+    sourceSets {
+        getByName("main") {
+            java.setSrcDirs(listOf("src/main/java/com/example/ecn_ping"))
+        }
+    }
 }
 
 dependencies {
