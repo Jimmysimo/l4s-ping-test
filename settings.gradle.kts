@@ -12,5 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "test_app_l4s_ping_test"
+rootProject.name = "ecn-ping-android"
 include(":app")
+include(":core")

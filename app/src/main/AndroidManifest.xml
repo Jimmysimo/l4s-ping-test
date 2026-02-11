@@ -1,12 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
-        android:label="@string/app_name"
+        android:label="ECN Ping"
         android:supportsRtl="true"
-        android:theme="@style/Theme.L4SPing">
+        android:theme="@style/Theme.EcnPing">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -16,5 +15,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>

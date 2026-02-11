@@ -1,6 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.L4SPing" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <item name="android:navigationBarColor">?attr/colorSurface</item>
+    <style name="Theme.EcnPing" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@android:color/holo_blue_dark</item>
+        <item name="colorPrimaryVariant">@android:color/holo_blue_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@android:color/holo_green_dark</item>
+        <item name="colorOnSecondary">@android:color/white</item>
     </style>
 </resources>
